@@ -3,7 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 import random
 
+# ✅ FIRST create app
 app = FastAPI()
+
+# ✅ THEN use it
+@app.get("/")
+def home():
+    return {"message": "Movie Bot is Live 🚀"}
 
 app.add_middleware(
     CORSMiddleware,
