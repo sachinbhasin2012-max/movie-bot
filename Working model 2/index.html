@@ -9,41 +9,43 @@
 
 <div class="flex flex-col h-screen">
 
+  <!-- Header -->
   <div class="p-4 bg-black text-xl font-bold">
     🎬 OTTplay Recommender
   </div>
 
+  <!-- Suggestions -->
   <div class="p-3 flex gap-2 overflow-x-auto bg-gray-800">
     <button onclick="quickSearch('comedy movies')" class="chip">Comedy</button>
     <button onclick="quickSearch('action movies')" class="chip">Action</button>
-    <button onclick="quickSearch('bengali movies')" class="chip">Bengali</button>
+    <button onclick="quickSearch('hindi drama')" class="chip">Hindi Drama</button>
+    <button onclick="quickSearch('based on my history')" class="chip">Based on History</button>
   </div>
 
+  <!-- Recent Searches -->
   <div id="recent" class="px-3 py-2 flex gap-2 overflow-x-auto bg-gray-900"></div>
 
+  <!-- Chat -->
   <div id="chat" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
 
+  <!-- Input -->
   <div class="p-4 bg-black flex">
-    <input id="input"
-      class="flex-1 p-2 rounded text-black"
+    <input id="input" 
+      class="flex-1 p-2 rounded text-black" 
       placeholder="Ask for movies..."
-      onkeypress="if(event.key==='Enter') sendMessage()"
+      onkeypress="handleKey(event)"
     />
-    <button onclick="sendMessage()" class="ml-2 px-4 py-2 bg-gray-700 rounded">Send</button>
+    <button onclick="sendMessage()" class="ml-2 px-4 py-2 bg-red-500 rounded">Send</button>
   </div>
 
 </div>
 
 <script>
-const API = "https://movie-bot-8mg3.onrender.com";
-
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");
 
-let watchlist = JSON.parse(localStorage.getItem("watchlist") || "[]");
-
-function saveWatchlist() {
-  localStorage.setItem("watchlist", JSON.stringify(watchlist));
+function handleKey(e) {
+  if (e.key === "Enter") sendMessage();
 }
 
 function quickSearch(text) {
@@ -63,20 +65,6 @@ function addUserMessage(text) {
   chat.innerHTML += `<div class="text-right text-sm text-gray-300">${text}</div>`;
 }
 
-async function playMovie(title) {
-  alert("▶ Playing " + title);
-}
-
-function addToWatchlist(title) {
-  if (!watchlist.includes(title)) {
-    watchlist.push(title);
-    saveWatchlist();
-    alert("➕ Added to Watchlist");
-  } else {
-    alert("Already in Watchlist");
-  }
-}
-
 function addBotMessage(data) {
   renderRecent(data.recent_searches);
 
@@ -87,37 +75,15 @@ function addBotMessage(data) {
   data.results.forEach(m => {
     html += `
       <div class="min-w-[220px] bg-gray-800 p-3 rounded-xl hover:bg-gray-700">
-
         <div class="font-semibold text-sm">${m.title}</div>
+        <div class="text-xs text-gray-400">${m.genre} | ${m.language}</div>
+        <div class="text-xs text-gray-400">⭐ ${m.rating} | ⏱ ${m.runtime}</div>
 
-        <div class="text-xs text-gray-400">
-          ${m.genre} | ${m.language}
-        </div>
-
-        <div class="text-xs text-gray-400">
-          ⭐ ${m.rating} | ⏱ ${m.runtime} min
-        </div>
-
-        <div class="text-xs text-gray-500 mt-1">
-          ${m.reason}
-        </div>
-
-        <div class="flex gap-2 mt-3">
-          <button onclick="playMovie('${m.title}')"
-            class="flex-1 text-xs bg-gray-700 hover:bg-gray-600 py-1 rounded border border-gray-500">
-            ▶ Play
-          </button>
-
-          <button onclick="addToWatchlist('${m.title}')"
-            class="flex-1 text-xs bg-gray-600 py-1 rounded">
-            + Watchlist
-          </button>
-        </div>
+        <div class="text-xs text-gray-500 mt-1">${m.reason}</div>
 
         <div class="text-[10px] text-gray-600 mt-2">
           Why this: ${m.explain}
         </div>
-
       </div>
     `;
   });
@@ -136,7 +102,7 @@ async function sendMessage() {
 
   chat.innerHTML += `<div id="loading" class="text-gray-500 text-sm">Finding best movies...</div>`;
 
-  const res = await fetch(`${API}/chat?user_id=user1&message=${encodeURIComponent(text)}`);
+  const res = await fetch(`https://movie-bot-8mg3.onrender.com/chat?user_id=user1&message=${text}`);
   const data = await res.json();
 
   const loading = document.getElementById("loading");
