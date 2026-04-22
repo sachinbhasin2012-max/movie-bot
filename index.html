@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>OTTplay Movie Bot</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-900 text-white">
+
+<div class="flex flex-col h-screen">
+
+  <!-- Header -->
+  <div class="p-4 bg-black text-xl font-bold">
+    🎬 OTTplay Recommender
+  </div>
+
+  <!-- Suggestions -->
+  <div class="p-3 flex gap-2 overflow-x-auto bg-gray-800">
+    <button onclick="quickSearch('comedy movies')" class="chip">Comedy</button>
+    <button onclick="quickSearch('action movies')" class="chip">Action</button>
+    <button onclick="quickSearch('hindi drama')" class="chip">Hindi Drama</button>
+    <button onclick="quickSearch('based on my history')" class="chip">Based on History</button>
+  </div>
+
+  <!-- Recent Searches -->
+  <div id="recent" class="px-3 py-2 flex gap-2 overflow-x-auto bg-gray-900"></div>
+
+  <!-- Chat -->
+  <div id="chat" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
+
+  <!-- Input -->
+  <div class="p-4 bg-black flex">
+    <input id="input" 
+      class="flex-1 p-2 rounded text-black" 
+      placeholder="Ask for movies..."
+      onkeypress="handleKey(event)"
+    />
+    <button onclick="sendMessage()" class="ml-2 px-4 py-2 bg-red-500 rounded">Send</button>
+  </div>
+
+</div>
+
+<script>
+const chat = document.getElementById("chat");
+const input = document.getElementById("input");
+
+function handleKey(e) {
+  if (e.key === "Enter") sendMessage();
+}
+
+function quickSearch(text) {
+  input.value = text;
+  sendMessage();
+}
+
+function renderRecent(list) {
+  let html = "";
+  list.forEach(s => {
+    html += `<button onclick="quickSearch('${s}')" class="chip">${s}</button>`;
+  });
+  document.getElementById("recent").innerHTML = html;
+}
+
+function addUserMessage(text) {
+  chat.innerHTML += `<div class="text-right text-sm text-gray-300">${text}</div>`;
+}
+
+function addBotMessage(data) {
+  renderRecent(data.recent_searches);
+
+  let html = `<div>
+    <div class="text-sm text-gray-400 mb-2">${data.reply}</div>
+    <div class="flex gap-3 overflow-x-auto">`;
+
+  data.results.forEach(m => {
+    html += `
+      <div class="min-w-[220px] bg-gray-800 p-3 rounded-xl hover:bg-gray-700">
+        <div class="font-semibold text-sm">${m.title}</div>
+        <div class="text-xs text-gray-400">${m.genre} | ${m.language}</div>
+        <div class="text-xs text-gray-400">⭐ ${m.rating} | ⏱ ${m.runtime}</div>
+
+        <div class="text-xs text-gray-500 mt-1">${m.reason}</div>
+
+        <div class="text-[10px] text-gray-600 mt-2">
+          Why this: ${m.explain}
+        </div>
+      </div>
+    `;
+  });
+
+  html += `</div></div>`;
+  chat.innerHTML += html;
+  chat.scrollTop = chat.scrollHeight;
+}
+
+async function sendMessage() {
+  const text = input.value;
+  if (!text) return;
+
+  addUserMessage(text);
+  input.value = "";
+
+  chat.innerHTML += `<div id="loading" class="text-gray-500 text-sm">Finding best movies...</div>`;
+
+  const res = await fetch(`http://127.0.0.1:8000/chat?user_id=user1&message=${text}`);
+  const data = await res.json();
+
+  const loading = document.getElementById("loading");
+  if (loading) loading.remove();
+
+  addBotMessage(data);
+}
+</script>
+
+<style>
+.chip {
+  padding: 6px 12px;
+  background: #374151;
+  border-radius: 999px;
+  font-size: 12px;
+}
+</style>
+
+</body>
+</html>
